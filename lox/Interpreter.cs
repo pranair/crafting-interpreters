@@ -1,6 +1,6 @@
 ﻿namespace lox.lox;
 
-class Interpreter : Visitor<object>
+class Interpreter : ExprVisitor<object>, StmtVisitor<object>
 {
     public class LoxRuntimeException(Token token, string message) :
         Exception(message)
@@ -8,12 +8,14 @@ class Interpreter : Visitor<object>
         public readonly Token token = token;
     }
 
-    public void interpret(Expr expression)
+    public void interpret(List<Stmt> statements)
     {
         try
         {
-            object result = evaluate(expression);
-            Console.WriteLine(stringify(result));
+            foreach (var statement in statements)
+            {
+                execute(statement);
+            }
         } 
         catch (LoxRuntimeException e)
         {
@@ -35,8 +37,8 @@ class Interpreter : Visitor<object>
 
         return result.ToString();
     }
-
-    public override object visitBinaryExpr(Expr.Binary expr)
+        
+    public object visitBinaryExpr(Expr.Binary expr)
     {
         object left = evaluate(expr.left);
         object right = evaluate(expr.right);
@@ -94,17 +96,17 @@ class Interpreter : Visitor<object>
         return left == right;
     }
 
-    public override object visitGroupingExpr(Expr.Grouping expr)
+    public object visitGroupingExpr(Expr.Grouping expr)
     {
         return evaluate(expr.expression);
     }
 
-    public override object visitLiteralExpr(Expr.Literal expr)
+    public object visitLiteralExpr(Expr.Literal expr)
     {
         return expr.value;
     }
 
-    public override object visitUnaryExpr(Expr.Unary expr)
+    public object visitUnaryExpr(Expr.Unary expr)
     {
         object right = evaluate(expr.right);
 
@@ -124,7 +126,12 @@ class Interpreter : Visitor<object>
 
     private object evaluate(Expr expr)
     {
-        return accept(expr);
+        return (this as ExprVisitor<object>).accept(expr);
+    }
+
+    private object execute(Stmt statement)
+    {
+        return (this as StmtVisitor<object>).accept(statement);
     }
 
     private void checkNumberOperands(Token token, object left, object right)
@@ -132,6 +139,19 @@ class Interpreter : Visitor<object>
         if (left is double && right is double) return;
 
         throw new LoxRuntimeException(token, "Operands must be numbers");
+    }
+
+    public object visitPrintStmt(Stmt.Print expr)
+    {
+        var value = evaluate(expr.expression);
+        Console.WriteLine(stringify(value));
+        return null;
+    }
+
+    public object visitExpressionStmt(Stmt.Expression expr)
+    {
+        evaluate(expr.expression);
+        return null;
     }
 }
 

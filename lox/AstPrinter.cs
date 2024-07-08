@@ -1,21 +1,21 @@
 ﻿namespace lox;
 
-class AstPrinter : Visitor<string> {
+class AstPrinter : ExprVisitor<string> {
     public string print(Expr expr)
     {
-        return accept(expr);
+        return (this as ExprVisitor<string>).accept(expr);
     }
 
-    public override string visitBinaryExpr(Expr.Binary expr)
+    public string visitBinaryExpr(Expr.Binary expr)
     {
         return paranthesize(expr.op.lexeme, expr.left, expr.right);
     }
-    public override string visitGroupingExpr(Expr.Grouping expr)
+    public string visitGroupingExpr(Expr.Grouping expr)
     {
         return paranthesize("group", expr.expression);
     }
 
-    public override string visitLiteralExpr(Expr.Literal expr)
+    public string visitLiteralExpr(Expr.Literal expr)
     {
         if (expr.value == null) 
             return "nil";
@@ -23,7 +23,7 @@ class AstPrinter : Visitor<string> {
             return expr.value.ToString();
     }
 
-    public override string visitUnaryExpr(Expr.Unary expr) {
+    public string visitUnaryExpr(Expr.Unary expr) {
         return paranthesize(expr.op.lexeme, expr.right);
     }
 

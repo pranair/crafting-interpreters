@@ -85,11 +85,11 @@ class Lox
     {
         Scanner scanner = new Scanner(source);
         IList<Token> tokens = scanner.scanTokens();
-        Expr expression = new Parser(tokens).parse();
+        var statements = new Parser(tokens).parse();
 
         if (hadError) return;
         
-        interpreter.interpret(expression);
+        interpreter.interpret(statements);
     }
 
     public static void error(int line, string message)

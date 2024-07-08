@@ -2,23 +2,49 @@
 
 class Parser(IList<Token> tokens)
 {
-    private class ParseExpression : Exception
+    private class ParseException : Exception
     {
     }
 
     private int current = 0;
-    public Expr? parse()
+    public List<Stmt> parse()
     {
         try
         {
-            return expression();
-        } catch (ParseExpression)
+            var statements = new List<Stmt>();
+
+            while (!isAtEnd())
+                statements.Add(statement());
+
+            return statements;
+        } catch (ParseException e)
         {
             return null;
         }
     }
 
-    public Expr equality()
+    private Stmt statement()
+    {
+        if (match(TokenType.PRINT)) return printStatement();
+
+        return expressionStatement();
+    }
+
+    private Stmt expressionStatement()
+    {
+        Expr expr = expression();
+        consume(TokenType.SEMICOLON, "Expected ';' after value.");
+        return new Stmt.Expression(expr);
+    }
+
+    private Stmt printStatement()
+    {
+        Expr expr = expression();
+        consume(TokenType.SEMICOLON, "Expected ';' after value.");
+        return new Stmt.Print(expr);
+    }
+
+    private Expr equality()
     {
         Expr expr = comparison();
 
@@ -26,7 +52,7 @@ class Parser(IList<Token> tokens)
         {
             Token op = previous();
             Expr right = comparison();
-            expr = new Expr.Binary(expr, op, right);  
+            expr = new Expr.Binary(expr, op, right);
         }
 
         return expr;
@@ -119,10 +145,10 @@ class Parser(IList<Token> tokens)
         throw error(peek(), message);
     }
 
-    private ParseExpression error(Token token, string message)
+    private ParseException error(Token token, string message)
     {
         Lox.error(token, message);
-        return new ParseExpression();
+        return new ParseException();
     }
 
     private Expr expression()
