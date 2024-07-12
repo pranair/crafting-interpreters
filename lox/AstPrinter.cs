@@ -6,6 +6,11 @@ class AstPrinter : ExprVisitor<string> {
         return (this as ExprVisitor<string>).accept(expr);
     }
 
+    public string visitAssignExpr(Expr.Assign assign)
+    {
+        throw new NotImplementedException();
+    }
+
     public string visitBinaryExpr(Expr.Binary expr)
     {
         return paranthesize(expr.op.lexeme, expr.left, expr.right);
@@ -25,6 +30,11 @@ class AstPrinter : ExprVisitor<string> {
 
     public string visitUnaryExpr(Expr.Unary expr) {
         return paranthesize(expr.op.lexeme, expr.right);
+    }
+
+    public string visitVariableExpr(Expr.Variable variable)
+    {
+        throw new NotImplementedException();
     }
 
     string paranthesize(string name, params Expr[] expressions)

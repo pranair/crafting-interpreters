@@ -8,4 +8,6 @@ abstract record Expr
     public sealed record Grouping(Expr expression) : Expr;
     public sealed record Literal(object value) : Expr;
     public sealed record Unary(Token op, Expr right) : Expr;
+    public sealed record Variable(Token name) : Expr;
+    public sealed record Assign(Token name, Expr value): Expr;
 }

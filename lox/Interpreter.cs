@@ -2,6 +2,7 @@
 
 class Interpreter : ExprVisitor<object>, StmtVisitor<object>
 {
+    private LoxEnvironment environment = new();
     public class LoxRuntimeException(Token token, string message) :
         Exception(message)
     {
@@ -152,6 +153,49 @@ class Interpreter : ExprVisitor<object>, StmtVisitor<object>
     {
         evaluate(expr.expression);
         return null;
+    }
+
+    public object visitVariableExpr(Expr.Variable variable)
+    {
+        return environment.get(variable.name);
+    }
+
+    public object visitVariableStmt(Stmt.Var var)
+    {
+        object value = null;
+        if (var.initializer != null)
+            value = evaluate(var.initializer);
+
+        environment.define(var.name.lexeme, value);
+        return null;
+    }
+
+    public object visitAssignExpr(Expr.Assign assign)
+    {
+        object value = evaluate(assign.value);
+        environment.assign(assign.name, value);
+        return value;
+    }
+
+    public object visitBlockStmt(Stmt.Block block)
+    {
+        executeBlock(block.statements, new LoxEnvironment(environment));
+        return null;
+    }
+
+    private void executeBlock(List<Stmt> statements, LoxEnvironment loxEnvironment)
+    {
+        LoxEnvironment previous = this.environment;
+        try
+        {
+            environment = loxEnvironment;
+
+            foreach (Stmt statement in statements)
+                execute(statement);
+        } finally
+        {
+            this.environment = previous;
+        }
     }
 }
 

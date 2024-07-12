@@ -1,7 +1,7 @@
 ﻿using lox;
 using lox.lox;
 
-enum TokenType
+public enum TokenType
 {
     // Single-character tokens.
     LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
@@ -23,7 +23,7 @@ enum TokenType
     EOF
 }
 
-class Token(TokenType type, string lexeme, object literal, int line)
+public class Token(TokenType type, string lexeme, object literal, int line)
 {
     public TokenType type { get; set; } = type;
     public string lexeme { get; set; } = lexeme;

@@ -14,20 +14,59 @@ class Parser(IList<Token> tokens)
             var statements = new List<Stmt>();
 
             while (!isAtEnd())
-                statements.Add(statement());
+                statements.Add(declaration());
 
             return statements;
-        } catch (ParseException e)
+        } catch (ParseException)
         {
             return null;
         }
     }
 
+    private Stmt declaration()
+    {
+        try
+        {
+            if (match(TokenType.VAR)) return varDeclaration();
+
+            return statement();
+        } catch(ParseException)
+        {
+            synchronize();
+            return null;
+        }
+    }
+
+    private Stmt varDeclaration()
+    {
+        Token name = consume(TokenType.IDENTIFIER, "Expect variable name");
+
+        Expr? initializer = null;
+        if (match(TokenType.EQUAL))
+        {
+            initializer = expression();
+        }
+
+        consume(TokenType.SEMICOLON, "Expect ';' after variable declaration");
+        return new Stmt.Var(name, initializer);
+    }
+
     private Stmt statement()
     {
         if (match(TokenType.PRINT)) return printStatement();
-
+        if (match(TokenType.LEFT_BRACE)) return new Stmt.Block(block());
         return expressionStatement();
+    }
+
+    private List<Stmt> block()
+    {
+        List<Stmt> statements = new();
+
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd())
+            statements.Add(declaration());
+
+        consume(TokenType.RIGHT_BRACE, "Except '}' after block.");
+        return statements;
     }
 
     private Stmt expressionStatement()
@@ -128,6 +167,11 @@ class Parser(IList<Token> tokens)
             return new Expr.Literal(previous().literal);
         }
 
+        if (match(TokenType.IDENTIFIER))
+        {
+            return new Expr.Variable(previous());
+        }
+
         if (match(TokenType.LEFT_PAREN))
         {
             Expr expr = expression();
@@ -153,7 +197,28 @@ class Parser(IList<Token> tokens)
 
     private Expr expression()
     {
-        return equality();
+        return assignment();
+    }
+
+    private Expr assignment()
+    {
+        Expr expr = equality();
+
+        if (match(TokenType.EQUAL))
+        {
+            Token equals = previous();
+            Expr value = assignment();
+
+            if (expr is Expr.Variable)
+            {
+                Token name = ((Expr.Variable)expr).name;
+                return new Expr.Assign(name, value);
+            }
+
+            error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     private bool match(params TokenType[] types)
