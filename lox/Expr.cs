@@ -10,4 +10,5 @@ abstract record Expr
     public sealed record Unary(Token op, Expr right) : Expr;
     public sealed record Variable(Token name) : Expr;
     public sealed record Assign(Token name, Expr value): Expr;
+    public sealed record Logical(Expr left, Token op, Expr right): Expr;
 }

@@ -94,6 +94,8 @@ class Interpreter : ExprVisitor<object>, StmtVisitor<object>
         if (left == null && right == null) return true;
         if (left == null) return false;
 
+        // FIXME: This does not work. Seems to be something to do with
+        //        double precision.
         return left == right;
     }
 
@@ -196,6 +198,44 @@ class Interpreter : ExprVisitor<object>, StmtVisitor<object>
         {
             this.environment = previous;
         }
+    }
+
+    public object visitLogicalExpr(Expr.Logical logical)
+    {
+        object left = evaluate(logical.left);
+
+        if (logical.op.type == TokenType.OR)
+        {
+            if (isTruthy(left)) return left;
+        } else
+        {
+            if (!isTruthy(left)) return left;
+        }
+
+        return evaluate(logical.right);
+    }
+
+    public object? visitIfStmt(Stmt.If ifStmt)
+    {
+        if(isTruthy(evaluate(ifStmt.condition)))
+        {
+            execute(ifStmt.thenBranch);
+        } else if (ifStmt.elseBranch != null)
+        {
+            execute(ifStmt.elseBranch);
+        }
+
+        return null;
+    }
+
+    public object? visitWhileStmt(Stmt.While whileStmt)
+    {
+        while (isTruthy(evaluate(whileStmt.condition)))
+        {
+            execute(whileStmt.body);
+        }
+
+        return null;
     }
 }
 
