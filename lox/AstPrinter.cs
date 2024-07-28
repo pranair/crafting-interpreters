@@ -15,6 +15,12 @@ class AstPrinter : ExprVisitor<string> {
     {
         return paranthesize(expr.op.lexeme, expr.left, expr.right);
     }
+
+    public string visitCallExpr(Expr.Call fnCall)
+    {
+        throw new NotImplementedException();
+    }
+
     public string visitGroupingExpr(Expr.Grouping expr)
     {
         return paranthesize("group", expr.expression);

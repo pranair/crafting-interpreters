@@ -11,6 +11,7 @@ interface ExprVisitor<R>
         Expr.Variable variable => visitVariableExpr(variable),
         Expr.Assign assign => visitAssignExpr(assign),
         Expr.Logical logical => visitLogicalExpr(logical),
+        Expr.Call fnCall => visitCallExpr(fnCall),
         _ => throw new NotImplementedException()
     };
 
@@ -25,6 +26,7 @@ interface ExprVisitor<R>
     public abstract R visitUnaryExpr(Expr.Unary expr);
     public abstract R visitAssignExpr(Expr.Assign assign);
     public abstract R visitLogicalExpr(Expr.Logical logical);
+    public abstract R visitCallExpr(Expr.Call fnCall);
 }
 
 interface StmtVisitor<R>
@@ -37,6 +39,8 @@ interface StmtVisitor<R>
         Stmt.Block block => visitBlockStmt(block),
         Stmt.If ifStmt => visitIfStmt(ifStmt),
         Stmt.While whileStmt => visitWhileStmt(whileStmt),
+        Stmt.Function fun => visitFunctionStmt(fun),
+        Stmt.Return ret => visitReturnStmt(ret),
         _ => throw new NotImplementedException()
     };
 
@@ -50,5 +54,7 @@ interface StmtVisitor<R>
     public abstract R visitBlockStmt(Stmt.Block block);
     public abstract R visitIfStmt(Stmt.If ifStmt);
     public abstract R visitWhileStmt(Stmt.While whileStmt);
+    public abstract R visitFunctionStmt(Stmt.Function fun);
+    public abstract R visitReturnStmt(Stmt.Return ret);
 }
 

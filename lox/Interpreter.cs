@@ -1,12 +1,40 @@
-﻿namespace lox.lox;
+﻿using System.Reflection.Metadata.Ecma335;
+
+namespace lox.lox;
+
+class ClockFunction : LoxCallable
+{
+    public int arity()
+    {
+        return 0;
+    }
+
+    public object call(Interpreter interpreter, List<object> arguments)
+    {
+        return (double)DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
+    }
+
+    public override string ToString()
+    {
+        return "<native fn>";
+    }
+}
 
 class Interpreter : ExprVisitor<object>, StmtVisitor<object>
 {
-    private LoxEnvironment environment = new();
+    public LoxEnvironment globals = new();
+    private LoxEnvironment environment;
     public class LoxRuntimeException(Token token, string message) :
         Exception(message)
     {
         public readonly Token token = token;
+    }
+
+    public Interpreter()
+    {
+        environment = globals;
+
+        globals.define("clock", new ClockFunction());
     }
 
     public void interpret(List<Stmt> statements)
@@ -185,7 +213,7 @@ class Interpreter : ExprVisitor<object>, StmtVisitor<object>
         return null;
     }
 
-    private void executeBlock(List<Stmt> statements, LoxEnvironment loxEnvironment)
+    public void executeBlock(List<Stmt> statements, LoxEnvironment loxEnvironment)
     {
         LoxEnvironment previous = this.environment;
         try
@@ -236,6 +264,49 @@ class Interpreter : ExprVisitor<object>, StmtVisitor<object>
         }
 
         return null;
+    }
+
+    public object visitCallExpr(Expr.Call fnCall)
+    {
+        object callee = evaluate(fnCall.callee);
+
+        List<object> args = new();
+        foreach (var arg in fnCall.arguments)
+        {
+            args.Add(evaluate(arg));
+        }
+
+        if (!(callee is LoxCallable))
+        {
+            throw new LoxRuntimeException(fnCall.paren,
+                "Can only call functions and classes.");
+        }
+
+        LoxCallable function = (LoxCallable)callee;
+
+        if (args.Count != function.arity())
+        {
+            throw new LoxRuntimeException(fnCall.paren, "Expected " +
+                function.arity() + " arguments but got " +
+                args.Count + ".");
+        }
+
+        return function.call(this, args);
+    }
+
+    public object visitFunctionStmt(Stmt.Function fun)
+    {
+        LoxFunction function = new LoxFunction(fun);
+        environment.define(fun.name.lexeme, function);
+        return null;
+    }
+
+    public object visitReturnStmt(Stmt.Return ret)
+    {
+        object value = null;
+        if (ret.value != null) value = evaluate(ret.value);
+
+        throw new Return(value);
     }
 }
 
